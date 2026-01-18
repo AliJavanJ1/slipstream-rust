@@ -1,26 +1,28 @@
-name: Build Windows Client
+name: Build Windows Client (Cross)
 
 on:
-  workflow_dispatch: # Allows you to manually trigger the build with a button
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest  # We use Linux because it can run the build scripts
 
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
       with:
-        submodules: recursive  # Crucial for downloading the C libraries
+        submodules: recursive
 
-    - name: Install LLVM and Clang (Required for binding C libraries)
-      run: choco install llvm -y
+    - name: Install Cross (Cross-compiler tool)
+      run: cargo install cross
 
-    - name: Build Release (Client Only)
-      run: cargo build --release -p slipstream-client
+    - name: Build Windows EXE
+      # We use the GNU target which works best for open source tools
+      run: cross build --release --target x86_64-pc-windows-gnu -p slipstream-client
 
     - name: Upload EXE
       uses: actions/upload-artifact@v4
       with:
-        name: slipstream-client-windows
-        path: target/release/slipstream-client.exe
+        name: slipstream-client.exe
+        # The path changes because we are using a specific target
+        path: target/x86_64-pc-windows-gnu/release/slipstream-client.exe
